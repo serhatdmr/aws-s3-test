@@ -10,6 +10,32 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+const bucketName string = "elasticbeanstalk-us-west-1-815606719766"
+
+func downloadItem(sess *session.Session) {
+
+	file, err := os.Create("downloads-and-uploads/download.txt")
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer file.Close()
+
+	downloader := s3manager.NewDownloader(sess)
+
+	_, err = downloader.Download(file,
+		&s3.GetObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String("my-file.txt"),
+		})
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Successfully downloaded")
+}
+
 func uploadItem(sess *session.Session) {
 
 	f, err := os.Open("downloads-and-uploads/my-file.txt")
@@ -23,7 +49,7 @@ func uploadItem(sess *session.Session) {
 
 	result, err := uploader.Upload(&s3manager.UploadInput{
 		ACL:    aws.String("public-read"),
-		Bucket: aws.String("elasticbeanstalk-us-west-1-815606719766"),
+		Bucket: aws.String(bucketName),
 		Key:    aws.String("my-file.txt"),
 		Body:   f,
 	})
@@ -41,7 +67,7 @@ func listItems(sess *session.Session) {
 	svc := s3.New(sess)
 
 	resp, err := svc.ListObjectsV2(&s3.ListObjectsV2Input{
-		Bucket: aws.String("elasticbeanstalk-us-west-1-815606719766"),
+		Bucket: aws.String(bucketName),
 	})
 
 	if err != nil {
@@ -66,4 +92,5 @@ func main() {
 
 	uploadItem(sess)
 	listItems(sess)
+	downloadItem(sess)
 }
